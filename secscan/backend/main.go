@@ -235,7 +235,7 @@ func downloadPDF(c *gin.Context) {
 }
 
 func runScanner(id string, targetURL string) {
-	modules := []string{"Port Scanner", "Security Headers", "TLS Analyzer", "Directory Fuzzer", "XSS Test", "SQLi Test", "CVE Checker"}
+	modules := []string{"Port Scanner", "Security Headers", "TLS Analyzer", "Directory Fuzzer", "XSS Test", "SQLi Test", "CVE Checker", "Subdomain Discovery"}
 	
 	for i, mod := range modules {
 		var findings []Finding
@@ -256,6 +256,8 @@ func runScanner(id string, targetURL string) {
 			findings, score = scanSQLi(targetURL)
 		case "CVE Checker":
 			findings, score = scanCVE(targetURL)
+		case "Subdomain Discovery":
+			findings, score = scanSubdomains(targetURL)
 		default:
 			findings = append(findings, Finding{Module: mod, Severity: "Low", Message: mod + " verification complete."})
 			score = 100
@@ -479,6 +481,29 @@ func scanCVE(target string) ([]Finding, int) {
 		msg := "No known CVEs found based on fingerprinting."
 		if server != "" { msg = fmt.Sprintf("Server fingerprinted as %s - no known critical CVEs.", server) }
 		findings = append(findings, Finding{Module: "CVE Checker", Severity: "Low", Message: msg})
+	}
+	return findings, score
+}
+
+func scanSubdomains(target string) ([]Finding, int) {
+	host := getHost(target)
+	subs := []string{"api", "dev", "v1", "admin", "test", "staging"}
+	var findings []Finding
+	found := 0
+
+	for _, sub := range subs {
+		subHost := fmt.Sprintf("%s.%s", sub, host)
+		_, err := net.LookupHost(subHost)
+		if err == nil {
+			findings = append(findings, Finding{Module: "Subdomain Discovery", Severity: "Low", Message: fmt.Sprintf("Public subdomain detected: %s", subHost)})
+			found++
+		}
+	}
+
+	score := 100 - (found * 10)
+	if score < 0 { score = 0 }
+	if len(findings) == 0 {
+		findings = append(findings, Finding{Module: "Subdomain Discovery", Severity: "Low", Message: "No common public subdomains found."})
 	}
 	return findings, score
 }
