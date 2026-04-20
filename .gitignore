@@ -1,0 +1,34 @@
+# Node.js
+node_modules/
+dist/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env*
+.vercel
+
+# Go
+bin/
+secscan-backend
+target-app
+go.sum
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+*.log
+
+# Project Specific
+gorev-hedef/config.json
+*.db
